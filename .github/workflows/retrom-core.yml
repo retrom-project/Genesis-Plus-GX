@@ -1,0 +1,60 @@
+name: Retrom core quality and release
+on:
+  pull_request:
+    branches: [retrom/g63f0c6870601]
+  push:
+    tags: [retrom-core-g63f0c6870601-r*]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install archive tool
+        run: sudo apt-get update && sudo apt-get install -y p7zip-full
+      - name: Validate release identity
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "refs/tags/$GITHUB_REF_NAME:refs/retrom-release/$GITHUB_REF_NAME"
+          test "$(git cat-file -t "refs/retrom-release/$GITHUB_REF_NAME")" = tag
+          test "$(git rev-list -n 1 "refs/retrom-release/$GITHUB_REF_NAME")" = "$GITHUB_SHA"
+          git fetch origin 'refs/heads/retrom/g63f0c6870601:refs/remotes/origin/retrom/g63f0c6870601'
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/retrom/g63f0c6870601
+      - name: Prepare pinned Emscripten
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          git -C "$RUNNER_TEMP/emsdk" checkout e566f7bdcc7735f44037911c24b87a58a3c93145
+          "$RUNNER_TEMP/emsdk/emsdk" install 3.1.74
+          "$RUNNER_TEMP/emsdk/emsdk" activate 3.1.74
+          echo "RETROM_EMSDK_ROOT=$RUNNER_TEMP/emsdk" >> "$GITHUB_ENV"
+      - name: Build core candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git switch -c build/ci
+          mkdir "$RUNNER_TEMP/core-candidate"
+          bash .github/rpg-runtime/build-candidate.sh "$RUNNER_TEMP/core-candidate"
+      - name: Publish immutable release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/rpg-runtime/build-release.py --candidate "$RUNNER_TEMP/core-candidate" --output "$RUNNER_TEMP/core-release" --tag "$GITHUB_REF_NAME"
+          flags=()
+          if [[ "$GITHUB_REF_NAME" == *-rc.* ]]; then flags+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP/core-release/"* --verify-tag --generate-notes "${flags[@]}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: core-candidate
+          path: ${{ runner.temp }}/core-candidate/*
+          if-no-files-found: error

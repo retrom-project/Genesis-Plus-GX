@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "forkRepository": "https://github.com/retrom-project/Genesis-Plus-GX",
+  "defaultBranch": "retrom/g63f0c6870601",
+  "upstreamMirrorBranch": "master",
+  "upstreams": [
+    {
+      "role": "emulatorjs-libretro-core",
+      "repository": "https://github.com/EmulatorJS/Genesis-Plus-GX",
+      "refType": "COMMIT",
+      "ref": "63f0c6870601c4bde3836519cb80d79b5798677f",
+      "commit": "63f0c6870601c4bde3836519cb80d79b5798677f"
+    },
+    {
+      "role": "emulatorjs-retroarch-linker",
+      "repository": "https://github.com/EmulatorJS/RetroArch",
+      "refType": "COMMIT",
+      "ref": "6dd4353937ef48b6ec0bfbdbb15d1c5992d86927",
+      "commit": "6dd4353937ef48b6ec0bfbdbb15d1c5992d86927"
+    }
+  ],
+  "adapterAbi": "emulatorjs-state-v1",
+  "releaseTagPattern": "^retrom-core-g63f0c6870601-r[1-9][0-9]*(-rc\\.[1-9][0-9]*)?$",
+  "releaseAssets": [
+    "genesis_plus_gx-wasm.data",
+    "LICENSE.txt",
+    "source.tar.gz",
+    "rpg-runtime-release.json"
+  ]
+}
