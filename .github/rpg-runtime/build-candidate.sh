@@ -14,7 +14,7 @@ trap 'rm -rf "$work"' EXIT INT TERM
 mkdir -p "$work/core" "$work/retroarch" "$work/EmulatorJS/data/cores" "$work/stage"
 source_digest=$(python3 "$recipe" digest "$output")
 python3 "$recipe" paths "$output" > "$work/paths"
-tar --mtime=@0 --owner=0 --group=0 --numeric-owner -C "$root" \
+tar --mtime=@0 --owner=0 --group=0 --numeric-owner --mode=go-w -C "$root" \
   --null --verbatim-files-from -T "$work/paths" -cf "$work/source.tar"
 tar -C "$work/core" -xf "$work/source.tar"
 
